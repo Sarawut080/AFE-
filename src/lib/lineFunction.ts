@@ -4,6 +4,22 @@ import axios from "axios";
 
 import { replyNotification, replyNoti } from "@/utils/apiLineGroup";
 
+// ตัวแปรสำหรับเก็บเวลาการแจ้งเตือนล่าสุดในหน่วยความจำ (RAM) เพื่อป้องกันการส่งซ้ำ
+const alertCache: { [key: string]: number } = {};
+
+const shouldAlert = (takecareId: number, type: string) => {
+    const key = `${type}_${takecareId}`;
+    const now = Date.now();
+    const lastTime = alertCache[key] || 0;
+    const interval = 5 * 60 * 1000; // 5 นาที
+
+    if (now - lastTime > interval) {
+        alertCache[key] = now;
+        return true;
+    }
+    return false;
+};
+
 interface PostbackSafezoneProps {
     userLineId: string;
     takecarepersonId: number;
@@ -34,6 +50,12 @@ export const postbackHeartRate = async ({
         );
 
         if (resUser && resTakecareperson) {
+            // ถ้าเพิ่งแจ้งเตือนหัวใจเต้นผิดปกติไปไม่ถึง 5 นาที ให้ข้ามการส่ง LINE รอบนี้ไปก่อน
+            if (!shouldAlert(resTakecareperson.takecare_id, 'heartrate')) {
+                console.log("⏳ Skip HeartRate Alert");
+                return resUser.users_line_id;
+            }
+
             const resSafezone = await api.getSafezone(
                 resTakecareperson.takecare_id,
                 resUser.users_id
@@ -187,6 +209,11 @@ export const postbackTemp = async ({
         );
 
         if (resUser && resTakecareperson) {
+            // ถ้าเพิ่งแจ้งเตือนอุณหภูมิผิดปกติไปไม่ถึง 5 นาที ให้ข้ามการส่ง LINE รอบนี้ไปก่อน
+            if (!shouldAlert(resTakecareperson.takecare_id, 'temp')) {
+                console.log("⏳ Skip Temp Alert");
+                return resUser.users_line_id;
+            }
             const resSafezone = await api.getSafezone(
                 resTakecareperson.takecare_id,
                 resUser.users_id
@@ -265,6 +292,11 @@ export const postbackSafezone = async ({
         );
 
         if (resUser && resTakecareperson) {
+            // ถ้าเพิ่งแจ้งเตือนออกนอกโซนปลอดภัยไปไม่ถึง 5 นาที ให้ข้ามการส่ง LINE รอบนี้ไปก่อน
+            if (!shouldAlert(resTakecareperson.takecare_id, 'safezone')) {
+                console.log("⏳ Skip Safezone Alert");
+                return resUser.users_line_id;
+                }
             const resSafezone = await api.getSafezone(
                 resTakecareperson.takecare_id,
                 resUser.users_id
