@@ -22,6 +22,7 @@ interface ReplyNotification {
     replyToken : string;
     message    : string;
     groupLineId   ?: string | null;
+    bgColor ?: string;
 }
 interface ReplyNotificationPostback {
     userId          : number;
@@ -29,6 +30,7 @@ interface ReplyNotificationPostback {
     type            : string;
     message         : string;
     replyToken      : string;
+    bgColor         ?: string;
 }
 interface ReplyNotificationPostbackTemp{
     userId          : number;
@@ -1061,7 +1063,8 @@ export const replyUserData = async ({
 
 export const replyNotification = async ({
     replyToken,
-    message
+    message,
+    bgColor = "#ffffff"
 }: ReplyNotification) => {
     try {
         const requestData = {
@@ -1072,6 +1075,11 @@ export const replyNotification = async ({
                     altText : "แจ้งเตือน",
                     contents: {
                         type: "bubble",
+                        styles: {
+                            body: {
+                                backgroundColor: bgColor
+                            }
+                        },
                         body: {
                             type    : "box",
                             layout  : "vertical",
@@ -1083,7 +1091,7 @@ export const replyNotification = async ({
                                         {
                                             type      : "span",
                                             text      : "แจ้งเตือนเขตปลอดภัย",
-                                            color     : "#FC0303",
+                                            color     : (bgColor === "#FFC107") ? "#000000" : "#faf1f1",
                                             size      : "xl",
                                             weight    : "bold",
                                             decoration: "none"
@@ -1110,7 +1118,7 @@ export const replyNotification = async ({
                                         {
                                             type      : "span",
                                             text      : message,
-                                            color     : "#555555",
+                                            color     : (bgColor === "#FFC107") ? "#000000" : "#faf1f1",
                                             size      : "md",
                                             // decoration: "none",
                                             // wrap      : true
@@ -1143,6 +1151,7 @@ export const replyNotificationPostback = async ({
     type,
     message,
     replyToken,
+    bgColor = "#ffffff"
     
 }: ReplyNotificationPostback ) => {
     try {
@@ -1154,6 +1163,11 @@ export const replyNotificationPostback = async ({
                     altText : "แจ้งเตือน",
                     contents: {
                         type: "bubble",
+                        styles: {
+                            body: {
+                                backgroundColor: bgColor
+                            }
+                        },
                         body: {
                             type    : "box",
                             layout  : "vertical",
@@ -1165,7 +1179,7 @@ export const replyNotificationPostback = async ({
                                         {
                                             type      : "span",
                                             text      : "แจ้งเตือนเขตปลอดภัย",
-                                            color     : "#FC0303",
+                                            color     : (bgColor === "#FFC107") ? "#000000" : "#ffffff",
                                             size      : "xl",
                                             weight    : "bold",
                                             decoration: "none"
@@ -1192,7 +1206,7 @@ export const replyNotificationPostback = async ({
                                         {
                                             type      : "span",
                                             text      : message,
-                                            color     : "#555555",
+                                            color     : (bgColor === "#FFC107") ? "#000000" : "#ffffff",
                                             size      : "md",
                                             // decoration: "none",
                                             // wrap      : true
@@ -1226,7 +1240,7 @@ export const replyNotificationPostback = async ({
                                         {
                                             type      : "span",
                                             text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้ที่มีภาวะพึ่งพิง",
-                                            color     : "#FC0303",
+                                            color     : (bgColor === "#FFC107") ? "#000000" : "#ffffff",
                                             size      : "md",
                                             // decoration: "none",
                                             // wrap      : true
