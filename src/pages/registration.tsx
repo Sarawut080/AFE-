@@ -6,15 +6,16 @@ import React, { useEffect, useState } from 'react';
 import Container from 'react-bootstrap/Container';
 import Form from 'react-bootstrap/Form';
 import ButtonState from '@/components/Button/ButtonState';
-import InputLabel from '@/components/Form/InputLabel'; // ตัวที่คุณแก้ใหม่แล้ว
+import InputLabel from '@/components/Form/InputLabel';
 import ModalAlert from '@/components/Modals/ModalAlert';
 import axios from 'axios';
 import md5 from 'md5';
 
-// --- เพิ่ม Import ---
+// Import Validation
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { registrationSchema, RegistrationFormData } from '@/components/validations/registrationSchema';
+// อย่าลืมเช็ค path ให้ถูกต้อง
+import { registrationSchema, RegistrationFormData } from '@/components/validations/registrationSchema'; 
 
 import styles from '@/styles/page.module.css';
 
@@ -29,20 +30,29 @@ const Registration = () => {
     const [displayName, setDisplayName] = useState<string>("");
     const [dataUser, setDataUser] = useState<UserData>({ isLogin: true, data: null });
 
-    // --- Setup React Hook Form ---
     const { 
         register, 
         handleSubmit, 
         reset, 
+        watch, // 🔥 1. เรียกใช้ watch
         formState: { errors, isSubmitting } 
     } = useForm<RegistrationFormData>({
         resolver: zodResolver(registrationSchema),
+        mode: "onChange", // แนะนำ: ให้ตรวจสอบทันทีที่พิมพ์ (Real-time Validation)
         defaultValues: {
             users_pin: "",
             users_tel1: "",
             users_postcode: ""
         }
     });
+
+    // 🔥 2. ฟังก์ชันเช็คว่าควรขึ้น "สีเขียว" หรือไม่
+    // เงื่อนไข: (ไม่มี Error) AND (มีข้อมูลพิมพ์อยู่)
+    const isFieldValid = (name: keyof RegistrationFormData) => {
+        const value = watch(name);
+        // เช็คว่าค่าไม่ว่าง (undefined, null, "") และ ไม่มี error
+        return !errors[name] && !!value && value.toString().trim() !== "";
+    };
 
     useEffect(() => {
         const auToken = router.query.auToken
@@ -70,7 +80,6 @@ const Registration = () => {
                 const userData = responseUser.data.data;
                 setDataUser({ isLogin: false, data: userData });
                 
-                // --- Reset ข้อมูลเข้า Form เมื่อดึงข้อมูลสำเร็จ ---
                 reset({
                     users_fname: userData.users_fname,
                     users_sname: userData.users_sname,
@@ -83,7 +92,6 @@ const Registration = () => {
                     users_province: userData.users_province,
                     users_postcode: userData.users_postcode,
                     users_tel1: userData.users_tel1,
-                    // Password ไม่ต้อง reset กลับมา
                 });
 
             } else {
@@ -95,10 +103,8 @@ const Registration = () => {
         }
     }
 
-    // --- Submit Function ---
     const onSubmit = async (formData: RegistrationFormData) => {
         try {
-            // เช็คกรณีสร้างใหม่ (ไม่มี dataUser) ต้องกรอก Password
             if (!dataUser.data && (!formData.users_passwd || !formData.users_passwd_comfirm)) {
                 setAlert({ show: true, message: 'กรุณากรอกรหัสผ่าน' });
                 return;
@@ -107,7 +113,6 @@ const Registration = () => {
             const data = {
                 users_line_id: router.query.auToken,
                 users_fname: formData.users_fname,
-                // Hash Password ถ้ามีการกรอก
                 users_passwd: formData.users_passwd ? md5(formData.users_passwd) : undefined,
                 users_pin: formData.users_pin,
                 status_id: 1,
@@ -141,7 +146,9 @@ const Registration = () => {
                 <h1 className="py-2">ลงทะเบียน</h1>
             </div>
             <div className="px-5">
+                {/* ❌ สำคัญมาก: ต้องไม่มี validated={...} ตรงนี้ */}
                 <Form noValidate onSubmit={handleSubmit(onSubmit)}>
+                    
                     <Form.Group>
                         <InputLabel label="LINE-USER" id="lineUser" defaultValue={displayName} disabled required />
                     </Form.Group>
@@ -154,6 +161,7 @@ const Registration = () => {
                         {...register("users_fname")}
                         isInvalid={!!errors.users_fname}
                         errorMessage={errors.users_fname?.message}
+                        isValid={isFieldValid("users_fname")} // 🔥 เพิ่ม isValid
                     />
 
                     <InputLabel 
@@ -164,6 +172,7 @@ const Registration = () => {
                         {...register("users_sname")}
                         isInvalid={!!errors.users_sname}
                         errorMessage={errors.users_sname?.message}
+                        isValid={isFieldValid("users_sname")} // 🔥 เพิ่ม isValid
                     />
 
                     {
@@ -177,6 +186,7 @@ const Registration = () => {
                                     {...register("users_passwd")}
                                     isInvalid={!!errors.users_passwd}
                                     errorMessage={errors.users_passwd?.message}
+                                    isValid={isFieldValid("users_passwd")} // 🔥
                                 />
                                 <InputLabel 
                                     label="รหัสผ่าน (อีกครั้ง)" 
@@ -186,6 +196,7 @@ const Registration = () => {
                                     {...register("users_passwd_comfirm")}
                                     isInvalid={!!errors.users_passwd_comfirm}
                                     errorMessage={errors.users_passwd_comfirm?.message}
+                                    isValid={isFieldValid("users_passwd_comfirm")} // 🔥
                                 />
                             </>
                         )
@@ -195,17 +206,39 @@ const Registration = () => {
                         label="Pin 4 หลัก" 
                         id="users_pin" 
                         placeholder="1234" 
-                        type="text" 
+                        type="tel" 
                         max={4}
                         disabled={!!dataUser.data}
                         {...register("users_pin")}
                         isInvalid={!!errors.users_pin}
                         errorMessage={errors.users_pin?.message}
+                        isValid={isFieldValid("users_pin")} // 🔥
                     />
 
-                    <InputLabel label="เลขที่บ้าน" id="users_number" placeholder="123/12" disabled={!!dataUser.data} {...register("users_number")} />
-                    <InputLabel label="หมู่" id="users_moo" placeholder="1" disabled={!!dataUser.data} {...register("users_moo")} />
-                    <InputLabel label="ถนน" id="users_road" placeholder="-" disabled={!!dataUser.data} {...register("users_road")} />
+                    <InputLabel 
+                        label="เลขที่บ้าน" 
+                        id="users_number" 
+                        placeholder="123/12" 
+                        disabled={!!dataUser.data} 
+                        {...register("users_number")} 
+                        isValid={isFieldValid("users_number")} // 🔥 (Optional ถ้ากรอกแล้วถึงจะเขียว)
+                    />
+                    <InputLabel 
+                        label="หมู่" 
+                        id="users_moo" 
+                        placeholder="1" 
+                        disabled={!!dataUser.data} 
+                        {...register("users_moo")}
+                        isValid={isFieldValid("users_moo")}
+                    />
+                    <InputLabel 
+                        label="ถนน" 
+                        id="users_road" 
+                        placeholder="-" 
+                        disabled={!!dataUser.data} 
+                        {...register("users_road")}
+                        isValid={isFieldValid("users_road")}
+                    />
                     
                     <InputLabel 
                         label="ตำบล" 
@@ -215,6 +248,7 @@ const Registration = () => {
                         {...register("users_tubon")}
                         isInvalid={!!errors.users_tubon}
                         errorMessage={errors.users_tubon?.message}
+                        isValid={isFieldValid("users_tubon")} // 🔥
                     />
                     <InputLabel 
                         label="อำเภอ" 
@@ -224,6 +258,7 @@ const Registration = () => {
                         {...register("users_amphur")}
                         isInvalid={!!errors.users_amphur}
                         errorMessage={errors.users_amphur?.message}
+                        isValid={isFieldValid("users_amphur")} // 🔥
                     />
                     <InputLabel 
                         label="จังหวัด" 
@@ -233,32 +268,33 @@ const Registration = () => {
                         {...register("users_province")}
                         isInvalid={!!errors.users_province}
                         errorMessage={errors.users_province?.message}
+                        isValid={isFieldValid("users_province")} // 🔥
                     />
                     
-                    {/* ใช้ ZipCode Rule จาก Schema */}
                     <InputLabel 
                         label="รหัสไปรษณีย์" 
                         id="users_postcode" 
                         placeholder="กรอกรหัสไปรษณีย์" 
-                        type="number" 
+                        type="tel" 
                         max={5}
                         disabled={!!dataUser.data} 
                         {...register("users_postcode")}
                         isInvalid={!!errors.users_postcode}
                         errorMessage={errors.users_postcode?.message}
+                        isValid={isFieldValid("users_postcode")} // 🔥
                     />
                     
-                    {/* ใช้ Phone Rule จาก Schema */}
                     <InputLabel 
                         label="เบอร์โทรศัพท์" 
                         id="users_tel1" 
                         placeholder="กรอกเบอร์โทรศัพท์" 
-                        type="number" 
+                        type="tel" 
                         max={10}
                         disabled={!!dataUser.data} 
                         {...register("users_tel1")}
                         isInvalid={!!errors.users_tel1}
                         errorMessage={errors.users_tel1?.message}
+                        isValid={isFieldValid("users_tel1")} // 🔥
                     />
 
                     {
@@ -269,7 +305,7 @@ const Registration = () => {
                                     className={styles.button} 
                                     text={'บันทึก'} 
                                     icon="fas fa-save" 
-                                    isLoading={isSubmitting} // ใช้ State ของ Hook Form
+                                    isLoading={isSubmitting} 
                                 />
                             </Form.Group>
                         )
