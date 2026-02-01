@@ -327,14 +327,14 @@ const ElderlyRegistration = () => {
                                             key={`gender-${genderId}`}
                                             label={item.gender_describe}
                                             type="radio"
+                                            name="gender_id"
                                             id={`gender-${genderId}`}
                                             value={genderId}
+                                            checked={watch("gender_id") === genderId}
                                             disabled={!!dataUser.data}
-                                            {...register("gender_id", {
-                                                onChange: (e) => {
-                                                    setValue("gender_id", Number(e.target.value), { shouldValidate: true });
-                                                }
-                                            })}
+                                            onChange={(e) => {
+                                                setValue("gender_id", Number(e.target.value), { shouldValidate: true });
+                                            }}
                                         />
                                     )
                                 })
@@ -359,14 +359,14 @@ const ElderlyRegistration = () => {
                                             className="py-1"
                                             label={item.marry_describe}
                                             type="radio"
+                                            name="marry_id"
                                             id={`marry-${marryId}`}
                                             value={marryId}
+                                            checked={watch("marry_id") === marryId}
                                             disabled={!!dataUser.data}
-                                            {...register("marry_id", {
-                                                onChange: (e) => {
-                                                    setValue("marry_id", Number(e.target.value), { shouldValidate: true });
-                                                }
-                                            })}
+                                            onChange={(e) => {
+                                                setValue("marry_id", Number(e.target.value), { shouldValidate: true });
+                                            }}
                                         />
                                     )
                                 })
