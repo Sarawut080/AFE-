@@ -330,10 +330,11 @@ const ElderlyRegistration = () => {
                                             id={`gender-${genderId}`}
                                             value={genderId}
                                             disabled={!!dataUser.data}
-                                            {...register("gender_id")}
-                                            onChange={(e) => {
-                                                setValue("gender_id", Number(e.target.value)); // 🔥 แปลงเป็น number
-                                            }}
+                                            {...register("gender_id", {
+                                                onChange: (e) => {
+                                                    setValue("gender_id", Number(e.target.value), { shouldValidate: true });
+                                                }
+                                            })}
                                         />
                                     )
                                 })
@@ -361,10 +362,11 @@ const ElderlyRegistration = () => {
                                             id={`marry-${marryId}`}
                                             value={marryId}
                                             disabled={!!dataUser.data}
-                                            {...register("marry_id")}
-                                            onChange={(e) => {
-                                                setValue("marry_id", Number(e.target.value)); // 🔥 แปลงเป็น number
-                                            }}
+                                            {...register("marry_id", {
+                                                onChange: (e) => {
+                                                    setValue("marry_id", Number(e.target.value), { shouldValidate: true });
+                                                }
+                                            })}
                                         />
                                     )
                                 })
