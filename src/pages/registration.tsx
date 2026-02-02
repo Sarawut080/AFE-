@@ -221,10 +221,6 @@ const Registration = () => {
             <div className="px-5">
                 <Form noValidate onSubmit={handleSubmit(onSubmit)}>
                     
-                    <Form.Group>
-                        <InputLabel label="LINE-USER" id="lineUser" defaultValue={displayName} disabled required />
-                    </Form.Group>
-                    
                     <InputLabel 
                         label="ชื่อ" 
                         id="users_fname" 
